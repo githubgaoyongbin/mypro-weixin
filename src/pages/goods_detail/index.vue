@@ -99,7 +99,11 @@
 </div>
 </template>
 <script>
+import {addGoods} from '../../common/cart'
+import ChooseAddress from '../../mixins/ChooseAddress'
 export default {
+    // 混入对象将一些公共的方法抽取出来封装
+    mixins:[ChooseAddress],
     data(){
         return{
             goods_detail:{},//商品详情的数据
@@ -119,7 +123,7 @@ export default {
     }
     },
     methods: {
-        // 获取商品详情的数据
+      // 获取商品详情的数据
       async getGoodsDetailData(goods_id){
       const res = await this.$axios.get(`goods/detail?goods_id=${goods_id}`)
 
@@ -132,39 +136,6 @@ export default {
             current,
             urls:this.goods_detail.pics.map(item=>{return item.pics_big}) //返回符合数据的图片集合列表
         })
-    },
-    // 收货地址的api
-    chooseAddress(){
-        wx.chooseAddress({
-            // 用户同意授权后 并且选中了地址
-            success:res => {
-            // 给返回来的结果再添加一个详细的地址 方便之后存储到本地的时候调用
-            res.detailAddres=`${res.provinceName}${res.cityName}${res.countyName}${res.detailInfo}`   
-                //给address赋值
-                this.address=res
-                // 保存到本地
-                wx.setStorageSync('address',res) 
-              },
-            //用户拒绝或者用户同意了,但是没有选择地址 同意来到到这个函数
-            fail:({errMsg})=>{
-                // 确定是获取授权成功后但是取消了的话
-               if(errMsg==='chooseAddress:fail auth deny'){
-                //  调用微信官方显示提示信息
-                 wx.showModal({
-                   title: '提示', //提示的标题,
-                   content: '请去我的页面打开授权选择收货地址', //提示的内容,
-                   showCancel: false, //是否显示取消按钮,
-                   confirmText: '确定', //确定按钮的文字，默认为取消，最多 4 个字符,
-                   confirmColor: '#3CC51F', //确定按钮的文字颜色,
-                   success: res => {
-                     if (res.confirm) {
-                       wx.switchTab({ url: '/pages/my/main' });
-                     } 
-                   }
-                 });
-               }
-            }
-})
     },
     // tab栏的切换
     tabSelect(index){
@@ -186,7 +157,11 @@ export default {
         mask: true, //显示透明蒙层，防止触摸穿透,
         success: res => {}
       })
-      
+      // 本地添加商品数据
+      addGoods({
+        goods_id:this.goods_detail.goods_id,
+        goods_number:1
+      })
     }
 }
 }
